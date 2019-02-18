@@ -21,10 +21,381 @@
 
 namespace Adshares\WordPress;
 
+use Psr\Http\Message\ResponseInterface;
+
 class Admin
 {
-    public static function init()
+    const SLUG = 'adshares-config';
+
+    private static $instance = null;
+    private $initiated = false;
+    private $title = 'Adshares Plugin Settings';
+    private $errorMessage = null;
+    private $savedInfo = null;
+
+    private static function getInstance()
     {
-        // not implemented
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    public static function handleInit()
+    {
+        $admin = self::getInstance();
+        $admin->init();
+    }
+
+    public function getTitle()
+    {
+        return __($this->title, 'adshares');
+    }
+
+    public function init()
+    {
+        $this->initHooks();
+
+        $action = isset($_POST['action']) ? $_POST['action'] : null;
+
+        switch ($action) {
+            case 'synchronize':
+                $this->synchronize();
+                break;
+            case 'configure':
+                $this->configure();
+                break;
+            case 'save-settings':
+                $this->saveSettings();
+                break;
+        }
+    }
+
+    public function initHooks()
+    {
+        if ($this->initiated) {
+            return;
+        }
+        $this->initiated = true;
+
+        add_action('admin_init', [$this, 'initAdmin']);
+        add_action('admin_menu', [$this, 'createMenu'], 1);
+        add_action('admin_notices', [$this, 'displayNotices']);
+        add_action('admin_enqueue_scripts', [$this, 'loadResources']);
+    }
+
+    public function initAdmin()
+    {
+        //not implemented
+    }
+
+    public function createMenu()
+    {
+        $hook = add_options_page(
+            $this->getTitle(),
+            __('Adshares', 'adshares'),
+            'manage_options',
+            self::SLUG,
+            [$this, 'renderPage']);
+    }
+
+    public function displayNotices()
+    {
+        $data = [
+            'errorMessage' => __($this->errorMessage, 'adshares'),
+            'savedInfo' => __($this->savedInfo, 'adshares'),
+        ];
+
+        $this->view('notices', $data);
+    }
+
+    public function loadResources($hook)
+    {
+        if ($hook !== 'settings_page_adshares-config') {
+            return;
+        }
+
+        wp_register_style('adshares-admin', ADSHARES_ASSETS . '/admin.css', [], ADSHARES_VERSION);
+        wp_enqueue_style('adshares-admin');
+    }
+
+    public function getUrl($view = 'config')
+    {
+        $args = [
+            'page' => self::SLUG,
+            'view' => $view,
+        ];
+
+        if ($view == 'delete_key') {
+            $args += [
+                'view' => 'start',
+                'action' => 'delete-key',
+                '_wpnonce' => wp_create_nonce(self::NONCE)
+            ];
+        }
+
+        $url = add_query_arg($args, admin_url('options-general.php'));
+
+        return $url;
+    }
+
+    /**
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
+    public function renderPage()
+    {
+        $view = isset($_GET['view']) ? $_GET['view'] : null;
+
+        switch ($view) {
+            default:
+                $this->renderConfigPage();
+                break;
+        }
+    }
+
+    private function renderConfigPage()
+    {
+        $data = [
+            'positions' => $this->getPositions(),
+            'sites' => $this->getSites(),
+            'adserver' => $this->getAdServerSettings(),
+        ];
+
+        $this->view('config', $data);
+    }
+
+    /**
+     * @param $name
+     * @param array $data
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
+    private function view($name, array $data = [])
+    {
+        $name .= '.twig';
+        $data = array_merge([
+            'admin' => $this,
+            'nonce' => wp_nonce_field(self::SLUG),
+        ], $data);
+
+        $loader = new \Twig_Loader_Filesystem(ADSHARES_TEMPLATES);
+        $twig = new \Twig_Environment($loader, [
+            'cache' => ADSHARES_CACHE,
+            'auto_reload' => true,
+        ]);
+
+        echo $twig->render($name, $data);
+    }
+
+    private function getAdServerSettings($name = null, $default = null)
+    {
+        $settings = get_option('adshares_settings');
+        $adserver = isset($settings['adserver']) ? $settings['adserver'] : [];
+
+        if ($name === null) {
+            return $adserver;
+        }
+
+        return isset($adserver[$name]) ? $adserver[$name] : $default;
+    }
+
+    private function getPositions()
+    {
+        return [
+            $this->createPosition('post_beginning', 'Beginning of post'),
+            $this->createPosition('post_middle', 'Middle of post'),
+            $this->createPosition('post_end', 'End of post'),
+            $this->createPosition('more_tag', 'After the <!--more--> tag'),
+            $this->createPosition('paragraph_first', 'After the first paragraph '),
+            $this->createPosition('paragraph_second', 'After the second paragraph '),
+            $this->createPosition('paragraph_third', 'After the third paragraph '),
+            $this->createPosition('paragraph_last', 'Before the last paragraph '),
+        ];
+    }
+
+    private function createPosition($id, $label)
+    {
+        $settings = get_option('adshares_settings');
+
+        return [
+            'id' => $id,
+            'label' => __($label, 'adshares'),
+            'value' => isset($settings['position'][$id]) ? $settings['position'][$id] : null,
+        ];
+    }
+
+    private function getSites()
+    {
+        return get_option('adshares_sites');
+    }
+
+    private function apiRequest($method, $uri = '', array $headers = [], array $options = [])
+    {
+        $client = new \GuzzleHttp\Client();
+        try {
+            return $client->request($method, $uri, array_merge([
+                'http_errors' => false,
+                'headers' => array_merge([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ], $headers),
+            ], $options
+            ));
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            $this->errorMessage = sprintf('Cannot connect to the server: %s.', $e->getMessage());
+            return null;
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
+            $this->errorMessage = $e->getMessage();
+            return null;
+        }
+    }
+
+    private function getServerUrl($path)
+    {
+        $url = $this->getAdServerSettings('url');
+
+        if (!empty($url)) {
+            $res = $this->apiRequest('POST', $url . '/api/info', [], [
+                'allow_redirects' => false,
+            ]);
+            if ($res !== null && $res->getStatusCode() === 301) {
+                $header = array_pop($res->getHeader('Location'));
+                return str_replace('/api/info', $path, $header);
+            }
+        }
+
+        return $url . $path;
+    }
+
+    public function synchronize()
+    {
+        if (!current_user_can('manage_options')) {
+            return false;
+        }
+
+        if (!wp_verify_nonce($_POST['_wpnonce'], self::SLUG)) {
+            return false;
+        }
+
+        $apiToken = $this->getApiToken(
+            $this->getAdServerSettings('login'),
+            $this->getAdServerSettings('password')
+        );
+        if (!$apiToken) {
+            return false;
+        }
+
+        if (($res = $this->apiRequest('GET', $this->getServerUrl('/api/sites'), [
+                'Authorization' => sprintf('Bearer %s', $apiToken),
+            ])) === null) {
+            return false;
+        }
+
+        if ($res->getStatusCode() !== 200) {
+            $this->errorMessage = $this->getErrorMessage($res);
+            return false;
+        }
+
+        update_option('adshares_sites', json_decode($res->getBody(), true));
+        $this->savedInfo = 'Successful synchronized.';
+
+        return true;
+    }
+
+    private function getApiToken($login, $password)
+    {
+        $client = new \GuzzleHttp\Client();
+
+        if (($res = $this->apiRequest('POST', $this->getServerUrl('/auth/login'), [], [
+                'body' => json_encode([
+                    'email' => $login,
+                    'password' => $password
+                ])
+            ])) === null) {
+            return false;
+        }
+
+        if ($res->getStatusCode() === 400) {
+            $this->errorMessage = 'Invalid email address or password.';
+            return null;
+        }
+
+        if ($res->getStatusCode() !== 200) {
+            $this->errorMessage = sprintf('Cannot connect to the AdServer: %s.', $this->getErrorMessage($res));
+            return null;
+        }
+
+        $data = json_decode($res->getBody(), true);
+
+        return isset($data['apiToken']) ? $data['apiToken'] : null;
+    }
+
+    private function getErrorMessage(ResponseInterface $res)
+    {
+        $data = json_decode($res->getBody(), true);
+
+        return !empty($data['message']) ? $data['message'] : sprintf('Unknown error (%d)', $res->getStatusCode());
+    }
+
+    public function configure()
+    {
+        if (!current_user_can('manage_options')) {
+            return false;
+        }
+
+        if (!wp_verify_nonce($_POST['_wpnonce'], self::SLUG)) {
+            return false;
+        }
+
+        if (
+            !isset($_POST['adserver']) ||
+            !isset($_POST['adserver']['url']) ||
+            !isset($_POST['adserver']['login']) ||
+            !isset($_POST['adserver']['password'])
+        ) {
+            $this->errorMessage = 'Invalid form data.';
+            return false;
+        }
+
+        $settings = (array)get_option('adshares_settings');
+        $settings['adserver'] = array_merge(
+            $settings['adserver'],
+            array_filter($_POST['adserver'])
+        );
+        update_option('adshares_settings', $settings);
+
+        if ($this->synchronize() === false) {
+            return false;
+        }
+
+        $settings['adserver']['configured'] = true;
+        update_option('adshares_settings', $settings);
+
+        $this->savedInfo = 'Successful connected.';
+
+        return true;
+    }
+
+    public function saveSettings()
+    {
+
+        if (!current_user_can('manage_options')) {
+            return false;
+        }
+
+        if (!wp_verify_nonce($_POST['_wpnonce'], self::SLUG)) {
+            return false;
+        }
+
+        $settings = get_option('adshares_settings');
+        $settings['position'] = $_POST['position'];
+        update_option('adshares_settings', $settings);
+
+        $this->savedInfo = 'Successful saved.';
+
+        return true;
     }
 }

@@ -23,26 +23,27 @@ namespace Adshares\WordPress;
 
 class Plugin
 {
-    public static function init()
+    public static function handleInit()
     {
         // not implemented
     }
 
     public static function activate()
     {
-        // First time installation
-        // Get all settings and update them only if they are empty
-        $quads_options = get_option('quads_settings');
-        if (!$quads_options) {
-            $quads_options['post_types'] = array('post', 'page');
-            $quads_options['visibility']['AppHome'] = '1';
-            $quads_options['visibility']['AppCate'] = '1';
-            $quads_options['visibility']['AppArch'] = '1';
-            $quads_options['visibility']['AppTags'] = '1';
-            $quads_options['quicktags']['QckTags'] = '1';
-
-            update_option('adshares_settings', $quads_options);
+        $settings = get_option('adshares_settings');
+        if (!$settings) {
+            $settings = [];
         }
+        $settings = array_merge([
+            'postTypes' => ['post', 'page']
+        ], $settings);
+//            $quads_options['visibility']['AppHome'] = '1';
+//            $quads_options['visibility']['AppCate'] = '1';
+//            $quads_options['visibility']['AppArch'] = '1';
+//            $quads_options['visibility']['AppTags'] = '1';
+//            $quads_options['quicktags']['QckTags'] = '1';
+
+        update_option('adshares_settings', $settings);
     }
 
     public static function handleActivation()

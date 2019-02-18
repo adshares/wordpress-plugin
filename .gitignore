@@ -1,9 +1,5 @@
-# build
 vendor/
-bin/
-# IDE
+cache/
+!cache/.gitkeep
 .idea/
-# QA
 phpunit.xml
-var/report
-.scannerwork/

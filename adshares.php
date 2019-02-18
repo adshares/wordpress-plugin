@@ -44,15 +44,17 @@ if (!function_exists('add_action')) {
 
 define('ADSHARES_VERSION', '0.0.1');
 define('ADSHARES_MINIMUM_WP_VERSION', '4.0');
-define('ADSHARES_ASSETS', plugin_dir_path(__FILE__) . '/assets');
+define('ADSHARES_TEMPLATES', plugin_dir_path(__FILE__) . 'templates');
+define('ADSHARES_CACHE', plugin_dir_path(__FILE__) . 'cache');
+define('ADSHARES_ASSETS', plugin_dir_url(__FILE__) . 'assets');
 
 require plugin_dir_path(__FILE__) . '/vendor/autoload.php';
 
 register_activation_hook(__FILE__, array('Adshares\WordPress\Plugin', 'handleActivation'));
 register_deactivation_hook(__FILE__, array('Adshares\WordPress\Plugin', 'handleDeactivation'));
 
-add_action('init', array('Adshares\WordPress\Plugin', 'init'));
+add_action('init', array('Adshares\WordPress\Plugin', 'handleInit'));
 
 if (is_admin() || (defined('WP_CLI') && WP_CLI)) {
-    add_action('init', array('Adshares\WordPress\Admin', 'init'));
+    add_action('init', array('Adshares\WordPress\Admin', 'handleInit'));
 }

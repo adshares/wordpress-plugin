@@ -1,0 +1,82 @@
+<div class="wrap adshares-config-wrap">
+    <h1>{{ admin.getTitle() }}</h1>
+    {% if adserver.configured %}
+        <form method="post" action="{{ admin.getUrl() }}" novalidate="novalidate">
+            {{ nonce|raw }}
+            <input type="hidden" name="action" value="synchronize" />
+            <p class="submit">
+                <input type="submit" name="submit" id="submit" class="button button-primary" value="Synchronize your account">
+            </p>
+        </form>
+        <form method="post" action="{{ admin.getUrl() }}">
+            {{ nonce|raw }}
+            <input type="hidden" name="action" value="save-settings" />
+            <h2>Position</h2>
+            <table class="form-table">
+                <tbody>
+                    {% for position in positions %}
+                        <tr>
+                            <th scope="row">
+                                <label for="{{ position.id }}">{{ position.label }}</label>
+                            </th>
+                            <td>
+                                <select name="position[{{ position.id }}]" id="{{ position.id }}">
+                                    <option value="0">No ads</option>
+                                    {% for site in sites %}
+                                        <optgroup label="{{ site.name }}">
+                                            {% for unit in site.adUnits %}
+                                                <option value="{{ unit.uuid }}" {{ (position.value is same as(unit.uuid)) ? 'selected' : '' }}>
+                                                    {{ unit.name }} ({{ unit.size.label }})
+                                                </option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {#<h2>Visibility</h2>#}
+            <p class="submit">
+                <input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes">
+            </p>
+        </form>
+    {% endif %}
+    <form method="post" action="{{ admin.getUrl() }}">
+        {{ nonce|raw }}
+        <input type="hidden" name="action" value="configure" />
+        <h2>AdServer</h2>
+        <table class="form-table">
+            <tbody>
+            <tr>
+                <th scope="row">
+                    <label for="adserverUrl">Server URL</label>
+                </th>
+                <td>
+                    <input name="adserver[url]" required type="url" id="adserverUrl" value="{{ adserver.url }}" class="regular-text">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="adserverLogin">User login</label>
+                </th>
+                <td>
+                    <input name="adserver[login]" required type="text" id="adserverLogin" value="{{ adserver.login }}" class="regular-text">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="adserverLogin">User password</label>
+                </th>
+                <td>
+                    <input name="adserver[password]" required type="password" id="adserverPassword" class="regular-text">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="submit">
+            <input type="submit" name="submit" id="submit" class="button button-primary" value="Save & Connect">
+        </p>
+    </form>
+</div>
