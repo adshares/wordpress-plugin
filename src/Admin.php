@@ -33,6 +33,11 @@ class Admin
     private $errorMessage = null;
     private $savedInfo = null;
 
+    /**
+     * Create singleton.
+     *
+     * @return Admin
+     */
     private static function getInstance()
     {
         if (self::$instance === null) {
@@ -41,17 +46,28 @@ class Admin
         return self::$instance;
     }
 
+    /**
+     * Handle initiating event.
+     */
     public static function handleInit()
     {
         $admin = self::getInstance();
         $admin->init();
     }
 
+    /**
+     * Prepare page title.
+     *
+     * @return string
+     */
     public function getTitle()
     {
         return __($this->title, 'adshares');
     }
 
+    /**
+     * Init admin plugin.
+     */
     public function init()
     {
         $this->initHooks();
@@ -71,6 +87,9 @@ class Admin
         }
     }
 
+    /**
+     * Init hooks.
+     */
     public function initHooks()
     {
         if ($this->initiated) {
@@ -84,11 +103,17 @@ class Admin
         add_action('admin_enqueue_scripts', [$this, 'loadResources']);
     }
 
+    /**
+     * Initiating admin hook.
+     */
     public function initAdmin()
     {
         //not implemented
     }
 
+    /**
+     * Creating menu hook.
+     */
     public function createMenu()
     {
         $hook = add_options_page(
@@ -99,6 +124,13 @@ class Admin
             [$this, 'renderPage']);
     }
 
+    /**
+     * Displaying notices hook.
+     *
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     public function displayNotices()
     {
         $data = [
@@ -109,6 +141,11 @@ class Admin
         $this->view('notices', $data);
     }
 
+    /**
+     * Loading resources hook.
+     *
+     * @param $hook hook name
+     */
     public function loadResources($hook)
     {
         if ($hook !== 'settings_page_adshares-config') {
@@ -119,6 +156,12 @@ class Admin
         wp_enqueue_style('adshares-admin');
     }
 
+    /**
+     * Prepare admin URL.
+     *
+     * @param string $view view name
+     * @return string
+     */
     public function getUrl($view = 'config')
     {
         $args = [
@@ -140,6 +183,8 @@ class Admin
     }
 
     /**
+     * Render admin page.
+     *
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -155,6 +200,13 @@ class Admin
         }
     }
 
+    /**
+     * Render configuration page.
+     *
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     private function renderConfigPage()
     {
         $data = [
@@ -167,8 +219,10 @@ class Admin
     }
 
     /**
-     * @param $name
-     * @param array $data
+     * Render Twig template.
+     *
+     * @param $name template name
+     * @param array $data rendered data
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -190,6 +244,13 @@ class Admin
         echo $twig->render($name, $data);
     }
 
+    /**
+     * Get AdServer setting.
+     *
+     * @param string $name setting name
+     * @param mixed $default default value
+     * @return mixed
+     */
     private function getAdServerSettings($name = null, $default = null)
     {
         $settings = get_option('adshares_settings');
@@ -202,6 +263,11 @@ class Admin
         return isset($adserver[$name]) ? $adserver[$name] : $default;
     }
 
+    /**
+     * Get ads positions.
+     *
+     * @return array
+     */
     private function getPositions()
     {
         return [
@@ -216,6 +282,12 @@ class Admin
         ];
     }
 
+    /**
+     * Create ad position.
+     * @param $id ad id
+     * @param $label ad label
+     * @return array
+     */
     private function createPosition($id, $label)
     {
         $settings = get_option('adshares_settings');
@@ -227,11 +299,25 @@ class Admin
         ];
     }
 
+    /**
+     * Get synchronized sites.
+     *
+     * @return array
+     */
     private function getSites()
     {
         return get_option('adshares_sites');
     }
 
+    /**
+     * Perform API request.
+     *
+     * @param $method
+     * @param string $uri
+     * @param array $headers
+     * @param array $options
+     * @return ResponseInterface
+     */
     private function apiRequest($method, $uri = '', array $headers = [], array $options = [])
     {
         $client = new \GuzzleHttp\Client();
@@ -253,6 +339,12 @@ class Admin
         }
     }
 
+    /**
+     * Prepare server URL
+     *
+     * @param $path URL path
+     * @return string
+     */
     private function getServerUrl($path)
     {
         $url = $this->getAdServerSettings('url');
@@ -270,6 +362,58 @@ class Admin
         return $url . $path;
     }
 
+    /**
+     * Create API token.
+     *
+     * @param $login
+     * @param $password
+     * @return string|null
+     */
+    private function getApiToken($login, $password)
+    {
+        $client = new \GuzzleHttp\Client();
+
+        if (($res = $this->apiRequest('POST', $this->getServerUrl('/auth/login'), [], [
+                'body' => json_encode([
+                    'email' => $login,
+                    'password' => $password
+                ])
+            ])) === null) {
+            return null;
+        }
+
+        if ($res->getStatusCode() === 400) {
+            $this->errorMessage = 'Invalid email address or password.';
+            return null;
+        }
+
+        if ($res->getStatusCode() !== 200) {
+            $this->errorMessage = sprintf('Cannot connect to the AdServer: %s.', $this->getErrorMessage($res));
+            return null;
+        }
+
+        $data = json_decode($res->getBody(), true);
+
+        return isset($data['apiToken']) ? $data['apiToken'] : null;
+    }
+
+    /**
+     * Extract error message from response.
+     *
+     * @param ResponseInterface $res
+     * @return string
+     */
+    private function getErrorMessage(ResponseInterface $res)
+    {
+        $data = json_decode($res->getBody(), true);
+
+        return !empty($data['message']) ? $data['message'] : sprintf('Unknown error (%d)', $res->getStatusCode());
+    }
+
+    /**
+     * Synchroniza account action.
+     * @return bool
+     */
     public function synchronize()
     {
         if (!current_user_can('manage_options')) {
@@ -305,41 +449,11 @@ class Admin
         return true;
     }
 
-    private function getApiToken($login, $password)
-    {
-        $client = new \GuzzleHttp\Client();
-
-        if (($res = $this->apiRequest('POST', $this->getServerUrl('/auth/login'), [], [
-                'body' => json_encode([
-                    'email' => $login,
-                    'password' => $password
-                ])
-            ])) === null) {
-            return false;
-        }
-
-        if ($res->getStatusCode() === 400) {
-            $this->errorMessage = 'Invalid email address or password.';
-            return null;
-        }
-
-        if ($res->getStatusCode() !== 200) {
-            $this->errorMessage = sprintf('Cannot connect to the AdServer: %s.', $this->getErrorMessage($res));
-            return null;
-        }
-
-        $data = json_decode($res->getBody(), true);
-
-        return isset($data['apiToken']) ? $data['apiToken'] : null;
-    }
-
-    private function getErrorMessage(ResponseInterface $res)
-    {
-        $data = json_decode($res->getBody(), true);
-
-        return !empty($data['message']) ? $data['message'] : sprintf('Unknown error (%d)', $res->getStatusCode());
-    }
-
+    /**
+     * Configure account action.
+     *
+     * @return bool
+     */
     public function configure()
     {
         if (!current_user_can('manage_options')) {
@@ -379,6 +493,11 @@ class Admin
         return true;
     }
 
+    /**
+     * Save settings action.
+     *
+     * @return bool
+     */
     public function saveSettings()
     {
 
