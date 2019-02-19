@@ -14,18 +14,18 @@
             <h2>Position</h2>
             <table class="form-table">
                 <tbody>
-                    {% for position in positions %}
+                    {% for option in positions %}
                         <tr>
                             <th scope="row">
-                                <label for="{{ position.id }}">{{ position.label }}</label>
+                                <label for="positions_{{ option.id }}">{{ option.label }}</label>
                             </th>
                             <td>
-                                <select name="position[{{ position.id }}]" id="{{ position.id }}">
+                                <select name="positions[{{ option.id }}]" id="positions_{{ option.id }}">
                                     <option value="0">No ads</option>
                                     {% for site in sites %}
                                         <optgroup label="{{ site.name }}">
                                             {% for unit in site.adUnits %}
-                                                <option value="{{ unit.uuid }}" {{ (position.value is same as(unit.uuid)) ? 'selected' : '' }}>
+                                                <option value="{{ unit.uuid }}" {{ (option.value is same as(unit.uuid)) ? 'selected' : '' }}>
                                                     {{ unit.name }} ({{ unit.size.label }})
                                                 </option>
                                             {% endfor %}
@@ -37,7 +37,37 @@
                     {% endfor %}
                 </tbody>
             </table>
-            {#<h2>Visibility</h2>#}
+            <h2>Visibility</h2>
+            <table class="form-table">
+                <tbody>
+                    <tr>
+                        <th scope="row">Show on</th>
+                        <td>
+                            {% for option in visibility %}
+                            <fieldset>
+                                <label for="visibility_{{ option.id }}">
+                                    <input name="visibility[{{ option.id }}]" type="checkbox" id="visibility_{{ option.id }}" value="1" {{ option.value ? 'checked' : '' }}>
+                                    {{ option.label }}
+                                </label>
+                            </fieldset>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Exceptions</th>
+                        <td>
+                            {% for option in exceptions %}
+                                <fieldset>
+                                    <label for="exceptions_{{ option.id }}">
+                                        <input name="exceptions[{{ option.id }}]" type="checkbox" id="exceptions_{{ option.id }}" value="1" {{ option.value ? 'checked' : '' }}>
+                                        {{ option.label }}
+                                    </label>
+                                </fieldset>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
             <p class="submit">
                 <input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes">
             </p>

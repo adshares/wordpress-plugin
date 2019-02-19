@@ -101,6 +101,7 @@ class Admin
         add_action('admin_menu', [$this, 'createMenu'], 1);
         add_action('admin_notices', [$this, 'displayNotices']);
         add_action('admin_enqueue_scripts', [$this, 'loadResources']);
+        add_filter('plugin_action_links', [$this, 'filterActionLinks'], 10, 2);
     }
 
     /**
@@ -154,6 +155,23 @@ class Admin
 
         wp_register_style('adshares-admin', ADSHARES_ASSETS . '/admin.css', [], ADSHARES_VERSION);
         wp_enqueue_style('adshares-admin');
+    }
+
+    /**
+     * Filter admin links list.
+     *
+     * @param $links
+     * @param $file
+     * @return array
+     */
+    public function filterActionLinks($links, $file)
+    {
+        if ($file == plugin_basename(ADSHARES_PLUGIN)) {
+            $settingsLink = '<a href="' . esc_url($this->getUrl()) . '">' . __('Settings', 'adshares') . '</a>';
+            array_unshift($links, $settingsLink);
+        }
+
+        return $links;
     }
 
     /**
@@ -212,6 +230,8 @@ class Admin
         $data = [
             'positions' => $this->getPositions(),
             'sites' => $this->getSites(),
+            'visibility' => $this->getVisibility(),
+            'exceptions' => $this->getExceptions(),
             'adserver' => $this->getAdServerSettings(),
         ];
 
@@ -274,7 +294,6 @@ class Admin
             $this->createPosition('post_beginning', 'Beginning of post'),
             $this->createPosition('post_middle', 'Middle of post'),
             $this->createPosition('post_end', 'End of post'),
-            $this->createPosition('more_tag', 'After the <!--more--> tag'),
             $this->createPosition('paragraph_first', 'After the first paragraph '),
             $this->createPosition('paragraph_second', 'After the second paragraph '),
             $this->createPosition('paragraph_third', 'After the third paragraph '),
@@ -283,19 +302,80 @@ class Admin
     }
 
     /**
-     * Create ad position.
+     * Get ads visibility.
+     *
+     * @return array
+     */
+    private function getVisibility()
+    {
+        return [
+            $this->createVisibility('homepage', 'Homepage'),
+            $this->createVisibility('categories', 'Categories '),
+            $this->createVisibility('archives', 'Archives '),
+            $this->createVisibility('tags', 'Tags'),
+        ];
+    }
+
+    /**
+     * Get ads exceptions.
+     *
+     * @return array
+     */
+    private function getExceptions()
+    {
+        return [
+            $this->createException('logged_user', 'Hide ads when user is logged in'),
+        ];
+    }
+
+    /**
+     * Create ad position option.
      * @param $id ad id
      * @param $label ad label
      * @return array
      */
     private function createPosition($id, $label)
     {
+        return $this->createOption('positions', $id, $label);
+    }
+
+    /**
+     * Create ad visibility option.
+     * @param $id ad id
+     * @param $label ad label
+     * @return array
+     */
+    private function createVisibility($id, $label)
+    {
+        return $this->createOption('visibility', $id, $label);
+    }
+
+    /**
+     * Create ad visibility option.
+     * @param $id ad id
+     * @param $label ad label
+     * @return array
+     */
+    private function createException($id, $label)
+    {
+        return $this->createOption('exceptions', $id, $label);
+    }
+
+    /**
+     * Create ad option.
+     * @param $group group name
+     * @param $id ad id
+     * @param $label ad label
+     * @return array
+     */
+    private function createOption($group, $id, $label)
+    {
         $settings = get_option('adshares_settings');
 
         return [
             'id' => $id,
             'label' => __($label, 'adshares'),
-            'value' => isset($settings['position'][$id]) ? $settings['position'][$id] : null,
+            'value' => isset($settings[$group][$id]) ? $settings[$group][$id] : null,
         ];
     }
 
@@ -476,7 +556,7 @@ class Admin
 
         $settings = (array)get_option('adshares_settings');
         $settings['adserver'] = array_merge(
-            $settings['adserver'],
+            (array)$settings['adserver'],
             array_filter($_POST['adserver'])
         );
         update_option('adshares_settings', $settings);
@@ -510,7 +590,9 @@ class Admin
         }
 
         $settings = get_option('adshares_settings');
-        $settings['position'] = $_POST['position'];
+        $settings['positions'] = $_POST['positions'];
+        $settings['visibility'] = $_POST['visibility'];
+        $settings['exceptions'] = $_POST['exceptions'];
         update_option('adshares_settings', $settings);
 
         $this->savedInfo = 'Successful saved.';
