@@ -26,7 +26,7 @@
                                         <optgroup label="{{ site.name }}">
                                             {% for unit in site.adUnits %}
                                                 <option value="{{ unit.uuid }}" {{ (option.value is same as(unit.uuid)) ? 'selected' : '' }}>
-                                                    {{ unit.name }} ({{ unit.size.label }})
+                                                    {{ unit.name }} ({{ unit.size.width }}x{{ unit.size.height }})
                                                 </option>
                                             {% endfor %}
                                         </optgroup>
