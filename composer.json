@@ -1,6 +1,6 @@
 {
     "name": "adshares/wordpress-plugin",
-    "description": "Adshares WordPress Plugin",
+    "description": "Adshares AdServer WordPress Plugin",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
     "keywords": [
@@ -27,7 +27,7 @@
         "php": ">=5.5.0",
         "composer/installers": "^1.6",
         "twig/twig": "^1.0",
-        "guzzlehttp/guzzle": "^6.3"
+        "guzzlehtitktp/guzzle": "^6.3"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.0",
