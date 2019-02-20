@@ -122,7 +122,8 @@ class Admin
             __('Adshares', 'adshares'),
             'manage_options',
             self::SLUG,
-            [$this, 'renderPage']);
+            [$this, 'renderPage']
+        );
     }
 
     /**
@@ -408,8 +409,7 @@ class Admin
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ], $headers),
-            ], $options
-            ));
+            ], $options));
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
             $this->errorMessage = sprintf('Cannot connect to the server: %s.', $e->getMessage());
             return null;
@@ -544,8 +544,7 @@ class Admin
             return false;
         }
 
-        if (
-            !isset($_POST['adserver']) ||
+        if (!isset($_POST['adserver']) ||
             !isset($_POST['adserver']['url']) ||
             !isset($_POST['adserver']['login']) ||
             !isset($_POST['adserver']['password'])

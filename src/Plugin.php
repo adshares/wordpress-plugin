@@ -23,8 +23,8 @@ namespace Adshares\WordPress;
 
 class Plugin
 {
-    const paragraphOpenTag = '<p>';
-    const paragraphCloseTag = '</p>';
+    const P_OPEN_TAG = '<p>';
+    const P_CLOSE_TAG = '</p>';
 
     private static $instance = null;
     private $initiated = false;
@@ -228,15 +228,15 @@ class Plugin
      * @param $content post content
      * @return string
      */
-    function sanitizeContent($content)
+    private function sanitizeContent($content)
     {
         // Replace all <p></p> tags with placeholder ##QA-TP1##
         $content = str_replace('<p></p>', '##ADS-TP1##', $content);
         // Replace all <p>&nbsp;</p> tags with placeholder ##QA-TP2##
         $content = str_replace('<p>&nbsp;</p>', '##ADS-TP2##', $content);
         // Unify paragraph closing tag
-        $content = str_replace('<P>', self::paragraphOpenTag, $content);
-        $content = str_replace('</P>', self::paragraphCloseTag, $content);
+        $content = str_replace('<P>', self::P_OPEN_TAG, $content);
+        $content = str_replace('</P>', self::P_CLOSE_TAG, $content);
 
         return $content;
     }
@@ -293,18 +293,18 @@ class Plugin
         preg_match_all("/<blockquote.*?<\/blockquote>/si", $content, $blockquotes);
 
         // Replace blockquotes with placeholder
-        if(!empty($blockquotes)){
-            foreach($blockquotes[0] as $bId => $blockquote){
+        if (!empty($blockquotes)) {
+            foreach ($blockquotes[0] as $bId => $blockquote) {
                 $replace = "#ADSBLOCKQUOTE" . $bId . '#';
                 $content = str_replace(trim($blockquote), $replace, $content);
             }
         }
 
         // Omit empty paragraphs
-        $paragraphs = explode(self::paragraphCloseTag, $content);
+        $paragraphs = explode(self::P_CLOSE_TAG, $content);
         $keys = [];
         foreach ($paragraphs as $key => $paragraph) {
-            if (strlen(trim($paragraph)) > 0 && strpos($paragraph, self::paragraphOpenTag) !== false) {
+            if (strlen(trim($paragraph)) > 0 && strpos($paragraph, self::P_OPEN_TAG) !== false) {
                 $keys[] = $key;
             }
         }
@@ -314,23 +314,23 @@ class Plugin
         $used = [];
 
         if ($paragraphFirst && $middle !== 1 && ($count === 1 && !$postEnd || $count > 1)) {
-            $paragraphs[$keys[0]] .= self::paragraphCloseTag . $paragraphFirst;
+            $paragraphs[$keys[0]] .= self::P_CLOSE_TAG . $paragraphFirst;
             $used[] = $keys[0];
         }
         if ($paragraphSecond && $middle !== 2 && ($count === 2 && !$postEnd || $count > 2)) {
-            $paragraphs[$keys[1]] .= self::paragraphCloseTag . $paragraphSecond;
+            $paragraphs[$keys[1]] .= self::P_CLOSE_TAG . $paragraphSecond;
             $used[] = $keys[1];
         }
         if ($paragraphThird && $middle !== 3 && ($count === 3 && !$postEnd || $count > 3)) {
-            $paragraphs[$keys[2]] .= self::paragraphCloseTag . $paragraphThird;
+            $paragraphs[$keys[2]] .= self::P_CLOSE_TAG . $paragraphThird;
             $used[] = $keys[2];
         }
         if ($paragraphLast && $count >= 2 && $last !== $middle && !in_array($keys[$last - 1], $used)) {
-            $paragraphs[$keys[$last - 1]] .= self::paragraphCloseTag . $paragraphLast;
+            $paragraphs[$keys[$last - 1]] .= self::P_CLOSE_TAG . $paragraphLast;
             $used[] = $keys[$last - 1];
         }
         if ($postMiddle && $count >= 2) {
-            $paragraphs[$keys[$middle - 1]] .= self::paragraphCloseTag . $postMiddle;
+            $paragraphs[$keys[$middle - 1]] .= self::P_CLOSE_TAG . $postMiddle;
             $used[] = $keys[$middle - 1];
         }
 
@@ -338,13 +338,13 @@ class Plugin
         foreach ($paragraphs as $key => $paragraph) {
             $content .= $paragraph;
             if (!in_array($key, $used)) {
-                $content .= self::paragraphCloseTag;
+                $content .= self::P_CLOSE_TAG;
             }
         }
 
         // Put back blockquotes into content
-        if(!empty($blockquotes)){
-            foreach($blockquotes[0] as $bId => $blockquote){
+        if (!empty($blockquotes)) {
+            foreach ($blockquotes[0] as $bId => $blockquote) {
                 $search = '#ADSBLOCKQUOTE' . $bId . '#';
                 $content = str_replace($search, trim($blockquote), $content);
             }
