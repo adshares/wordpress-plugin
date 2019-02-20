@@ -430,12 +430,12 @@ class Admin
         $url = $this->getAdServerSettings('url');
 
         if (!empty($url)) {
-            $res = $this->apiRequest('POST', $url . '/api/info', [], [
-                'allow_redirects' => false,
-            ]);
-            if ($res !== null && $res->getStatusCode() === 301) {
-                $header = array_pop($res->getHeader('Location'));
-                return str_replace('/api/info', $path, $header);
+            $res = $this->apiRequest('GET', $url . '/info.json');
+            if ($res !== null && $res->getStatusCode() === 200) {
+                $info = json_decode($res->getBody(), true);
+                if (isset($info['api-base-url'])) {
+                    $url = $info['api-base-url'];
+                }
             }
         }
 
