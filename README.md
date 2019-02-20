@@ -2,7 +2,7 @@
   <a href="https://adshares.net/">
     <img src="https://adshares.net/logos/ads.svg" alt="Adshares" width=72 height=72>
   </a>
-  <h3 align="center"><small>AdServer WordPress Plugin</small></h3>
+  <h3 align="center"><small>Adshares WordPress Plugin</small></h3>
   <p align="center">
     <a href="https://github.com/adshares/wordpress-plugin/issues/new?template=bug_report.md&labels=Bug">Report bug</a>
     ·
@@ -36,7 +36,7 @@ This plugin requires **PHP 5.5** or higher.
  3. Build distribution files:
  ```
  composer install
- composer run build
+ composer build
  ```
  4. Plugin files will be saved in `build/adshares` directory
  5. Copy directory `build/adshares` into `wp-content/plugins`

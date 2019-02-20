@@ -2,4 +2,5 @@ vendor/
 cache/
 !cache/.gitkeep
 .idea/
+build/
 phpunit.xml

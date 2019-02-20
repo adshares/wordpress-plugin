@@ -1,6 +1,6 @@
 {
     "name": "adshares/wordpress-plugin",
-    "description": "Adshares AdServer WordPress Plugin",
+    "description": "Adshares WordPress Plugin",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
     "keywords": [
@@ -35,7 +35,8 @@
         "dealerdirect/phpcodesniffer-composer-installer": "^0.4.4",
         "jakub-onderka/php-parallel-lint": "^1.0",
         "wimg/php-compatibility": "^8.1",
-        "sensiolabs/security-checker": "^4.1"
+        "sensiolabs/security-checker": "^4.1",
+        "phing/phing": "^2.16"
     },
     "autoload": {
         "psr-4": {
@@ -48,6 +49,9 @@
         }
     },
     "scripts": {
+        "build": [
+            "phing build"
+        ],
         "install-codestandards": [
             "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
         ],
@@ -59,6 +63,7 @@
         ]
     },
     "extra": {
+        "installer-name": "adshares",
         "branch-alias": {
             "dev-master": "0.0.x-dev"
         }

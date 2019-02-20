@@ -45,14 +45,16 @@ if (!function_exists('add_action')) {
 define('ADSHARES_VERSION', '0.0.1');
 define('ADSHARES_MINIMUM_WP_VERSION', '4.0');
 define('ADSHARES_PLUGIN', __FILE__);
-define('ADSHARES_TEMPLATES', plugin_dir_path(__FILE__) . 'templates');
-define('ADSHARES_CACHE', plugin_dir_path(__FILE__) . 'cache');
-define('ADSHARES_ASSETS', plugin_dir_url(__FILE__) . 'assets');
+define('ADSHARES_TEMPLATES', plugin_dir_path(ADSHARES_PLUGIN) . 'templates');
+define('ADSHARES_CACHE', plugin_dir_path(ADSHARES_PLUGIN) . 'cache');
+define('ADSHARES_ASSETS', plugin_dir_url(ADSHARES_PLUGIN) . 'assets');
 
-require plugin_dir_path(__FILE__) . '/vendor/autoload.php';
+if (file_exists(ADSHARES_PLUGIN . '/vendor/autoload.php')) {
+    require ADSHARES_PLUGIN . '/vendor/autoload.php';
+}
 
-register_activation_hook(__FILE__, array('Adshares\WordPress\Plugin', 'handleActivation'));
-register_deactivation_hook(__FILE__, array('Adshares\WordPress\Plugin', 'handleDeactivation'));
+register_activation_hook(ADSHARES_PLUGIN, array('Adshares\WordPress\Plugin', 'handleActivation'));
+register_deactivation_hook(ADSHARES_PLUGIN, array('Adshares\WordPress\Plugin', 'handleDeactivation'));
 
 add_action('init', array('Adshares\WordPress\Plugin', 'handleInit'));
 
