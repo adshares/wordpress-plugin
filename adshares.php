@@ -4,7 +4,7 @@
  * Plugin URI: http://wordpress.org/plugins/adshares/
  * Description: The easiest way to connect your site to the Adshares network
  * Author: Adshares
- * Version: 0.0.1
+ * Version: 0.1.1
  * Author URI: https://adshares.pl
  * Text Domain: adshares
  * License: GPLv3
@@ -33,7 +33,7 @@
  */
 /**
  * @package Adshares
- * @version 0.1.0
+ * @version 0.1.1
  */
 
 // Exit if accessed directly
@@ -42,15 +42,15 @@ if (!function_exists('add_action')) {
     exit;
 }
 
-define('ADSHARES_VERSION', '0.1.0');
+define('ADSHARES_VERSION', '0.1.1');
 define('ADSHARES_MINIMUM_WP_VERSION', '4.0');
 define('ADSHARES_PLUGIN', __FILE__);
 define('ADSHARES_TEMPLATES', plugin_dir_path(ADSHARES_PLUGIN) . 'templates');
 define('ADSHARES_CACHE', plugin_dir_path(ADSHARES_PLUGIN) . 'cache');
 define('ADSHARES_ASSETS', plugin_dir_url(ADSHARES_PLUGIN) . 'assets');
 
-if (file_exists(ADSHARES_PLUGIN . '/vendor/autoload.php')) {
-    require ADSHARES_PLUGIN . '/vendor/autoload.php';
+if (file_exists(plugin_dir_path(ADSHARES_PLUGIN) . 'vendor/autoload.php')) {
+    require plugin_dir_path(ADSHARES_PLUGIN) . 'vendor/autoload.php';
 }
 
 register_activation_hook(ADSHARES_PLUGIN, array('Adshares\WordPress\Plugin', 'handleActivation'));

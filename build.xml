@@ -23,6 +23,8 @@
     <target name="prepare">
         <delete dir="${builddir}"/>
         <mkdir dir="${builddir}"/>
+        <mkdir dir="${builddir}/${projectname}"/>
+        <mkdir dir="${builddir}/${projectname}/cache"/>
         <copy todir="${builddir}/${projectname}">
             <fileset refid="src"/>
         </copy>
