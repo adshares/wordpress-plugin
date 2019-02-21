@@ -25,6 +25,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
+        "ext-json": "*",
         "composer/installers": "^1.6",
         "twig/twig": "^1.0",
         "guzzlehttp/guzzle": "^6.3"

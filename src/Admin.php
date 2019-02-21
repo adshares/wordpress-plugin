@@ -523,7 +523,19 @@ class Admin
             return false;
         }
 
-        update_option('adshares_sites', json_decode($res->getBody(), true));
+        $activeSites = [];
+        if ($sites = json_decode($res->getBody(), true)) {
+            $activeSites = array_filter($sites, function ($site) {
+                return isset($site['status']) && isset($site['adUnits']) && $site['status'] === 2;
+            });
+            foreach ($activeSites as $site) {
+                $site['adUnits'] = array_filter($site['adUnits'], function ($unit) {
+                    return isset($unit['status']) && $unit['status'] === 1;
+                });
+            }
+        }
+
+        update_option('adshares_sites', $activeSites);
         $this->savedInfo = 'Successful synchronized.';
 
         return true;
