@@ -33,7 +33,7 @@
  */
 /**
  * @package Adshares
- * @version 0.0.1
+ * @version 0.1.0
  */
 
 // Exit if accessed directly
@@ -42,7 +42,7 @@ if (!function_exists('add_action')) {
     exit;
 }
 
-define('ADSHARES_VERSION', '0.0.1');
+define('ADSHARES_VERSION', '0.1.0');
 define('ADSHARES_MINIMUM_WP_VERSION', '4.0');
 define('ADSHARES_PLUGIN', __FILE__);
 define('ADSHARES_TEMPLATES', plugin_dir_path(ADSHARES_PLUGIN) . 'templates');
