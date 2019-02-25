@@ -295,6 +295,7 @@ class Admin
             $this->createPosition('post_beginning', 'Beginning of post'),
             $this->createPosition('post_middle', 'Middle of post'),
             $this->createPosition('post_end', 'End of post'),
+            $this->createPosition('post_excerpt', 'After the excerpt'),
             $this->createPosition('paragraph_first', 'After the first paragraph '),
             $this->createPosition('paragraph_second', 'After the second paragraph '),
             $this->createPosition('paragraph_third', 'After the third paragraph '),

@@ -125,6 +125,7 @@ class Plugin
 
         add_action('wp_head', [$this, 'loadAdsScript']);
         add_filter('the_content', [$this, 'filterContent'], 20);
+        add_filter('get_the_excerpt', [$this, 'filterExcerpt'], 20);
     }
 
     /**
@@ -156,6 +157,23 @@ class Plugin
         $content = $this->cleanContent($content);
 
         return do_shortcode($content);
+    }
+
+    /**
+     * Filter post excerpt.
+     *
+     * @param $content post excerpt
+     * @return string
+     */
+    public function filterExcerpt($excerpt)
+    {
+        if ($this->isAdAllowed($excerpt) &&
+            is_main_query() &&
+            $postExcerpt = $this->getPositionAd('post_excerpt', $excerpt)) {
+            $excerpt .= $postExcerpt;
+        }
+
+        return $excerpt;
     }
 
     /**
