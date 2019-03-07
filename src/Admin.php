@@ -436,7 +436,7 @@ class Admin
             return null;
         }
 
-        $res = $this->apiRequest('GET', $url.'/info.json');
+        $res = $this->apiRequest('GET', $url . '/info.json');
 
         if (null === $res) {
             $this->errorMessage = 'Failed to fetch INFO';
@@ -478,7 +478,7 @@ class Admin
             return null;
         }
 
-        return $url.$path;
+        return $url . $path;
     }
 
     /**
