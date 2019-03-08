@@ -348,13 +348,14 @@ class Plugin
 
     private function preserveBlockQuotes($content)
     {
-        $this->blockquotes = [];
-        preg_match_all("/<blockquote.*?<\/blockquote>/si", $content, $this->blockquotes);
+        preg_match_all("/<blockquote.*?<\/blockquote>/si", $content, $blockquotes);
 
-        if (!empty($this->blockquotes)) {
-            foreach ($this->blockquotes[0] as $bId => $blockquote) {
-                $replace = "#ADSBLOCKQUOTE$bId#";
-                $content = str_replace(trim($blockquote), $replace, $content);
+        $this->blockquotes = [];
+        if (!empty($blockquotes)) {
+            foreach ($blockquotes[0] as $bId => $blockquote) {
+                $this->blockquotes[$bId] = trim($blockquote);
+
+                $content = str_replace($this->blockquotes[$bId], "#ADSBLOCKQUOTE#$bId#", $content);
             }
         }
 
@@ -363,11 +364,8 @@ class Plugin
 
     private function restoreBlockQuotes($content)
     {
-        if (!empty($this->blockquotes)) {
-            foreach ($this->blockquotes[0] as $bId => $blockquote) {
-                $search = '#ADSBLOCKQUOTE' . $bId . '#';
-                $content = str_replace($search, trim($blockquote), $content);
-            }
+        foreach ($this->blockquotes as $bId => $blockquote) {
+            $content = str_replace("#ADSBLOCKQUOTE#$bId#", $blockquote, $content);
         }
 
         return $content;
