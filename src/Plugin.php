@@ -340,6 +340,6 @@ class Plugin
             }
         }
 
-        return $postBeginning . implode($newParagraphs) . '<br />';
+        return $postBeginning . implode($newParagraphs);
     }
 }
