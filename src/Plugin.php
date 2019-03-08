@@ -25,7 +25,6 @@ class Plugin
 {
     const P_OPEN_TAG = '<p>';
     const P_CLOSE_TAG = '</p>';
-    const ADSH_PARAGRAPH_MARKER = '###ADSH_PARAGRAPH_OPEN###';
 
     private static $instance = null;
     private $initiated = false;
@@ -229,6 +228,7 @@ class Plugin
             'off_paragraph_third',
             'off_paragraph_last',
         ];
+
         foreach ($tags as $tag) {
             if (strpos($content, '<!--' . $tag . '-->') !== false) {
                 $content = str_replace(['<p><!--' . $tag . '--></p>', '<!--' . $tag . '-->'], '', $content);
@@ -294,8 +294,8 @@ class Plugin
     /**
      * Insert ads into post content.
      *
-     * @param $content string Original post content
-     * @return string Modified content
+     * @param $content post content
+     * @return string
      */
     private function insertAds($content)
     {
@@ -307,39 +307,75 @@ class Plugin
         $paragraphThird = $this->getPositionAd('paragraph_third', $content);
         $paragraphLast = $this->getPositionAd('paragraph_last', $content);
 
-        $contentMarked = str_ireplace(self::P_OPEN_TAG, self::ADSH_PARAGRAPH_MARKER . self::P_OPEN_TAG, $content);
-        $paragraphs = explode(self::ADSH_PARAGRAPH_MARKER, $contentMarked);
-        $paragraphs = array_values(array_filter($paragraphs, 'trim'));
+        $blockquotes = [];
+        preg_match_all("/<blockquote.*?<\/blockquote>/si", $content, $blockquotes);
 
-        $count = count($paragraphs);
-
-        $idxMiddle = $postMiddle ? floor($count / 2) : false;
-        $idxEnd = $count - 1;
-        $idxLast = $paragraphLast ? $idxEnd - 1 : false;
-
-        $idxFirst = $paragraphFirst ? 0 : false;
-        $idxSecond = $paragraphSecond ? 1 : false;
-        $idxThird = $paragraphThird ? 2 : false;
-
-        $newParagraphs = [];
-        foreach ($paragraphs as $index => $paragraph) {
-            $newParagraphs[] = $paragraph;
-
-            if ($index === $idxEnd) {
-                $newParagraphs[] = $postEnd;
-            } elseif ($index === $idxMiddle) {
-                $newParagraphs[] = $postMiddle;
-            } elseif ($index === $idxLast) {
-                $newParagraphs[] = $paragraphLast;
-            } elseif ($index === $idxFirst) {
-                $newParagraphs[] = $paragraphFirst;
-            } elseif ($index === $idxSecond) {
-                $newParagraphs[] = $paragraphSecond;
-            } elseif ($index === $idxThird) {
-                $newParagraphs[] = $paragraphThird;
+        // Replace blockquotes with placeholder
+        if (!empty($blockquotes)) {
+            foreach ($blockquotes[0] as $bId => $blockquote) {
+                $replace = "#ADSBLOCKQUOTE" . $bId . '#';
+                $content = str_replace(trim($blockquote), $replace, $content);
             }
         }
 
-        return $postBeginning . implode($newParagraphs) . '<br />';
+        // Omit empty paragraphs
+        $paragraphs = explode(self::P_CLOSE_TAG, $content);
+        $keys = [];
+        foreach ($paragraphs as $key => $paragraph) {
+            if (strlen(trim($paragraph)) > 0 && strpos($paragraph, self::P_OPEN_TAG) !== false) {
+                $keys[] = $key;
+            }
+        }
+        $count = count($keys);
+        $middle = $postMiddle ? (int)($count / 2) : -1;
+        $last = $paragraphLast ? $count - 1 : -1;
+        $used = [];
+
+        if ($paragraphFirst && $middle !== 1 && ($count === 1 && !$postEnd || $count > 1)) {
+            $paragraphs[$keys[0]] .= self::P_CLOSE_TAG . $paragraphFirst;
+            $used[] = $keys[0];
+        }
+        if ($paragraphSecond && $middle !== 2 && ($count === 2 && !$postEnd || $count > 2)) {
+            $paragraphs[$keys[1]] .= self::P_CLOSE_TAG . $paragraphSecond;
+            $used[] = $keys[1];
+        }
+        if ($paragraphThird && $middle !== 3 && ($count === 3 && !$postEnd || $count > 3)) {
+            $paragraphs[$keys[2]] .= self::P_CLOSE_TAG . $paragraphThird;
+            $used[] = $keys[2];
+        }
+        if ($paragraphLast && $count >= 2 && $last !== $middle && !in_array($keys[$last - 1], $used)) {
+            $paragraphs[$keys[$last - 1]] .= self::P_CLOSE_TAG . $paragraphLast;
+            $used[] = $keys[$last - 1];
+        }
+        if ($postMiddle && $count >= 2) {
+            $paragraphs[$keys[$middle - 1]] .= self::P_CLOSE_TAG . $postMiddle;
+            $used[] = $keys[$middle - 1];
+        }
+
+        $content = '';
+        foreach ($paragraphs as $key => $paragraph) {
+            $content .= $paragraph;
+            if (!in_array($key, $used)) {
+                $content .= self::P_CLOSE_TAG;
+            }
+        }
+
+        // Put back blockquotes into content
+        if (!empty($blockquotes)) {
+            foreach ($blockquotes[0] as $bId => $blockquote) {
+                $search = '#ADSBLOCKQUOTE' . $bId . '#';
+                $content = str_replace($search, trim($blockquote), $content);
+            }
+        }
+
+        if ($postBeginning) {
+            $content = $postBeginning . $content;
+        }
+
+        if ($postEnd) {
+            $content = $content . $postEnd;
+        }
+
+        return $content;
     }
 }
