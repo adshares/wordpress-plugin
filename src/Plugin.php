@@ -324,6 +324,10 @@ class Plugin
 
         $newParagraphs = [];
         foreach ($paragraphs as $index => $paragraph) {
+            if (strpos($paragraph, self::P_CLOSE_TAG) === false) {
+                $paragraph .= self::P_CLOSE_TAG;
+            }
+
             $newParagraphs[] = $paragraph;
 
             if ($index === $idxEnd) {
