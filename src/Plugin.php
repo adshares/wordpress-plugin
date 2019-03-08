@@ -29,6 +29,7 @@ class Plugin
 
     private static $instance = null;
     private $initiated = false;
+    private $blockquotes;
 
     /**
      * Create singleton.
@@ -307,9 +308,9 @@ class Plugin
         $paragraphThird = $this->getPositionAd('paragraph_third', $content);
         $paragraphLast = $this->getPositionAd('paragraph_last', $content);
 
-        $contentMarked = str_ireplace(self::P_OPEN_TAG, self::ADSH_PARAGRAPH_MARKER . self::P_OPEN_TAG, $content);
-        $paragraphs = explode(self::ADSH_PARAGRAPH_MARKER, $contentMarked);
-        $paragraphs = array_values(array_filter($paragraphs, 'trim'));
+        $content = $this->preserveBlockQuotes($content);
+
+        $paragraphs = $this->extractParagraphs($content);
 
         $count = count($paragraphs);
 
@@ -340,6 +341,42 @@ class Plugin
             }
         }
 
-        return $postBeginning . implode($newParagraphs);
+        $content = $postBeginning . implode($newParagraphs);
+
+        return $this->restoreBlockQuotes($content);
+    }
+
+    private function preserveBlockQuotes($content)
+    {
+        $this->blockquotes = [];
+        preg_match_all("/<blockquote.*?<\/blockquote>/si", $content, $this->blockquotes);
+
+        if (!empty($this->blockquotes)) {
+            foreach ($this->blockquotes[0] as $bId => $blockquote) {
+                $replace = "#ADSBLOCKQUOTE$bId#";
+                $content = str_replace(trim($blockquote), $replace, $content);
+            }
+        }
+
+        return $content;
+    }
+
+    private function restoreBlockQuotes($content)
+    {
+        if (!empty($this->blockquotes)) {
+            foreach ($this->blockquotes[0] as $bId => $blockquote) {
+                $search = '#ADSBLOCKQUOTE' . $bId . '#';
+                $content = str_replace($search, trim($blockquote), $content);
+            }
+        }
+
+        return $content;
+    }
+
+    private function extractParagraphs($content)
+    {
+        $markedContent = str_ireplace(self::P_OPEN_TAG, self::ADSH_PARAGRAPH_MARKER . self::P_OPEN_TAG, $content);
+
+        return array_values(array_filter(explode(self::ADSH_PARAGRAPH_MARKER, $markedContent), 'trim'));
     }
 }
