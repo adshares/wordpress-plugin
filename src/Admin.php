@@ -431,13 +431,13 @@ class Admin
         $url = $this->getAdServerSettings('url');
 
         if (!empty($url)) {
-        $res = $this->apiRequest('GET', $url . '/info.json');
+            $res = $this->apiRequest('GET', $url . '/info.json');
             if ($res !== null && $res->getStatusCode() === 200) {
-        $info = json_decode($res->getBody(), true);
+                $info = json_decode($res->getBody(), true);
                 if (isset($info['api-base-url'])) {
                     $url = $info['api-base-url'];
-        }
-        }
+                }
+            }
         }
 
         return $url . $path;
@@ -527,12 +527,12 @@ class Admin
         $activeSites = [];
         if ($sites = json_decode($res->getBody(), true)) {
             $activeSites = array_filter($sites, function ($site) {
-                    return isset($site['status']) && isset($site['adUnits']) && $site['status'] === 2;
-                });
+                return isset($site['status']) && isset($site['adUnits']) && $site['status'] === 2;
+            });
             foreach ($activeSites as $site) {
                 $site['adUnits'] = array_filter($site['adUnits'], function ($unit) {
-                        return isset($unit['status']) && $unit['status'] === 1;
-                    });
+                    return isset($unit['status']) && $unit['status'] === 1;
+                });
             }
         }
 
