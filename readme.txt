@@ -3,7 +3,7 @@ Contributors: adshares
 Tags: adshares, ad, ads, advertising, banners, publisher, ad injection, ad inserter, ad manager
 Requires at least: 4.0
 Tested up to: 5.1
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 Requires PHP: 5.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -29,7 +29,7 @@ Recommended installation:
 
 1. Go to YourWebsite->Plugins->Add New
 2. Search for "Adshares"
-3. Click "install Now"
+3. Click "Install Now"
 
 Alternative installation:
 
@@ -56,6 +56,11 @@ composer build
 
 == Changelog ==
 
+= 0.1.3 =
+* Updated ad insertion (prevent from AdUnit flocking)
+* Updated service discovery (new INFO endpoint format)
+* Fixed empty paragraph handling
+
 = 0.1.2 =
 * Fixed excerpt support
 
@@ -72,6 +77,9 @@ composer build
 Complete changelog: https://github.com/adshares/wordpress-plugin/blob/master/CHANGELOG.md
 
 == Upgrade Notice ==
+
+= 0.1.3 =
+This version supports new protocol version. Upgrade immediately.
 
 = 0.1.1 =
 This version fixes a class loading bug. Upgrade immediately.
