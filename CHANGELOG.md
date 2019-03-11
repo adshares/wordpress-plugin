@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Updated
+- Ad insertion (prevent from AdUnit flocking)
 - Service discovery (new INFO endpoint format)
 
 ## [0.1.2] - 25.02.2019
