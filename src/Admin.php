@@ -430,14 +430,52 @@ class Admin
     {
         $url = $this->getAdServerSettings('url');
 
-        if (!empty($url)) {
-            $res = $this->apiRequest('GET', $url . '/info.json');
-            if ($res !== null && $res->getStatusCode() === 200) {
-                $info = json_decode($res->getBody(), true);
-                if (isset($info['api-base-url'])) {
-                    $url = $info['api-base-url'];
-                }
+        if (empty($url)) {
+            $this->errorMessage = 'Missing AdServer URL';
+
+            return null;
+        }
+
+        $res = $this->apiRequest('GET', $url . '/info.json');
+
+        if (null === $res) {
+            $this->errorMessage = 'Failed to fetch INFO';
+
+            return null;
+        }
+
+        if (200 !== $res->getStatusCode()) {
+            $this->errorMessage = sprintf('INFO endpoint returned an error [%d]', $res->getStatusCode());
+
+            return null;
+        }
+
+        $info = json_decode($res->getBody(), true);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            $this->errorMessage = sprintf('Error parsing INFO response. %s', json_last_error_msg());
+
+            return null;
+        }
+
+        if (!isset($info['module'])) {
+            $this->errorMessage = 'Invalid INFO format (Missing module name)';
+
+            return null;
+        }
+
+        if ('adserver-user-panel' === $info['module']) {
+            if (!isset($info['serverUrl'])) {
+                $this->errorMessage = 'Invalid INFO format (Missing server url)';
+
+                return null;
             }
+
+            $url = $info['serverUrl'];
+        } elseif ('adserver' !== $info['module']) {
+            $this->errorMessage = 'Invalid module.';
+
+            return null;
         }
 
         return $url . $path;
@@ -452,24 +490,37 @@ class Admin
      */
     private function getApiToken($login, $password)
     {
-        $client = new \GuzzleHttp\Client();
+        $serverUrl = $this->getServerUrl('/auth/login');
 
-        if (($res = $this->apiRequest('POST', $this->getServerUrl('/auth/login'), [], [
+        if ($serverUrl === null) {
+            return null;
+        }
+
+        $res = $this->apiRequest(
+            'POST',
+            $serverUrl,
+            [],
+            [
                 'body' => json_encode([
                     'email' => $login,
-                    'password' => $password
-                ])
-            ])) === null) {
+                    'password' => $password,
+                ]),
+            ]
+        );
+
+        if ($res === null) {
             return null;
         }
 
         if ($res->getStatusCode() === 400) {
             $this->errorMessage = 'Invalid email address or password.';
+
             return null;
         }
 
         if ($res->getStatusCode() !== 200) {
             $this->errorMessage = sprintf('Cannot connect to the AdServer: %s.', $this->getErrorMessage($res));
+
             return null;
         }
 
@@ -509,30 +560,46 @@ class Admin
             $this->getAdServerSettings('login'),
             $this->getAdServerSettings('password')
         );
+
         if (!$apiToken) {
             return false;
         }
 
-        if (($res = $this->apiRequest('GET', $this->getServerUrl('/api/sites'), [
-                'Authorization' => sprintf('Bearer %s', $apiToken),
-            ])) === null) {
+        $serverUrl = $this->getServerUrl('/api/sites');
+
+        if ($serverUrl === null) {
             return false;
         }
 
-        if ($res->getStatusCode() !== 200) {
-            $this->errorMessage = $this->getErrorMessage($res);
+        $response = $this->apiRequest(
+            'GET',
+            $serverUrl,
+            [
+                'Authorization' => sprintf('Bearer %s', $apiToken),
+            ]
+        );
+
+        if ($response === null) {
+            return false;
+        }
+
+        if ($response->getStatusCode() !== 200) {
+            $this->errorMessage = $this->getErrorMessage($response);
+
             return false;
         }
 
         $activeSites = [];
-        if ($sites = json_decode($res->getBody(), true)) {
-            $activeSites = array_filter($sites, function ($site) {
-                return isset($site['status']) && isset($site['adUnits']) && $site['status'] === 2;
-            });
-            foreach ($activeSites as $site) {
-                $site['adUnits'] = array_filter($site['adUnits'], function ($unit) {
-                    return isset($unit['status']) && $unit['status'] === 1;
+        if ($sites = json_decode($response->getBody(), true)) {
+            $activeSites = array_filter($sites,
+                function ($site) {
+                    return isset($site['status']) && isset($site['adUnits']) && $site['status'] === 2;
                 });
+            foreach ($activeSites as $site) {
+                $site['adUnits'] = array_filter($site['adUnits'],
+                    function ($unit) {
+                        return isset($unit['status']) && $unit['status'] === 1;
+                    });
             }
         }
 
