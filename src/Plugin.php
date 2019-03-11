@@ -314,7 +314,7 @@ class Plugin
 
         $count = count($paragraphs);
 
-        $idxMiddle = $postMiddle ? floor($count / 2) : false;
+        $idxMiddle = $postMiddle ? (int)floor($count / 2) - 1 : false;
         $idxEnd = $count - 1;
         $idxLast = $paragraphLast ? $idxEnd - 1 : false;
 
