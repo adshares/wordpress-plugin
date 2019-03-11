@@ -233,10 +233,10 @@ class Plugin
         foreach ($tags as $tag) {
             if (strpos($content, '<!--' . $tag . '-->') !== false) {
                 $content = str_replace(['<p><!--' . $tag . '--></p>', '<!--' . $tag . '-->'], '', $content);
-                $content = str_replace("##QA-TP1##", "<p></p>", $content);
-                $content = str_replace("##QA-TP2##", "<p>&nbsp;</p>", $content);
             }
         }
+        $content = str_replace("##ADS-TP1##", "<p></p>", $content);
+        $content = str_replace("##ADS-TP2##", "<p>&nbsp;</p>", $content);
 
         return $content;
     }
@@ -314,7 +314,7 @@ class Plugin
 
         $count = count($paragraphs);
 
-        $idxMiddle = $postMiddle ? floor($count / 2) : false;
+        $idxMiddle = $postMiddle ? (int)floor($count / 2) - 1 : false;
         $idxEnd = $count - 1;
         $idxLast = $paragraphLast ? $idxEnd - 1 : false;
 

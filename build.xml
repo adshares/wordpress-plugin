@@ -13,6 +13,7 @@
         <include name="CHANGELOG.md"/>
         <include name="LICENSE"/>
         <include name="README.md"/>
+        <include name="readme.txt"/>
     </fileset>
 
     <target name="build">
