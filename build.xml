@@ -48,5 +48,4 @@
     <target name="pack">
         <zip destfile="${builddir}/${projectname}.zip" basedir="${builddir}/${projectname}"/>
     </target>
-
 </project>
