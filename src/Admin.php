@@ -639,7 +639,7 @@ class Admin
             array_filter($_POST['adserver'])
         );
 
-	    $settings['adserver']['url']=rtrim($settings['adserver']['url'], '/');
+        $settings['adserver']['url']=rtrim($settings['adserver']['url'], '/');
         update_option('adshares_settings', $settings);
 
         if ($this->synchronize() === false) {
