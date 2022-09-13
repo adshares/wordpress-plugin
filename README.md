@@ -8,7 +8,7 @@
     ·
     <a href="https://github.com/adshares/wordpress-plugin/issues/new?template=feature_request.md&labels=New%20Feature">Request feature</a>
     ·
-    <a href="https://github.com/adshares/wordpress-plugin/wiki">Wiki</a>
+    <a href="https://docs.adshares.net/adserver/">Docs</a>
   </p>
 </p>
 
